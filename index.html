@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html{color-scheme:dark}body{margin:0}</style>
+<title>Menu Puro Gosto</title>
+<style>
+/* Layout: o PDF original empilhado em colunas 9:16, com zonas PEDIR invisiveis por cima, barra inferior discreta e painel de pedido. */
+:root{
+  --bg:#1a0e0b; --ink:#fff3e0; --muted:#d3b7a3; --orange:#fe8d01; --yellow:#ffc20e;
+  --maroon:#7a1b0c; --card:#fffaf2; --card-ink:#3b130a; --line:#ecd9bf; --ok:#1f7a3d;
+  --font:'Montserrat',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-snap-type:y proximity;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.35;padding-bottom:76px}
+button{font-family:inherit;cursor:pointer}
+.stage{display:flex;flex-direction:column;align-items:center;gap:10px}
+.page{position:relative;width:100%;width:min(100%,calc((100vh - 76px) * .5625));width:min(100%,calc((100dvh - 76px) * .5625));aspect-ratio:9/16;scroll-snap-align:center;background:#000;overflow:hidden;user-select:none;-webkit-user-select:none}
+.page img{display:block;width:100%;height:100%;object-fit:fill;-webkit-user-drag:none;pointer-events:none}
+.hs{position:absolute;margin:0;padding:0;border:0;background:transparent;border-radius:999px;-webkit-tap-highlight-color:transparent}
+.hs::after{content:"";position:absolute;inset:-60% -30%}
+.hs.s::after{inset:-170% -70%}
+.hs:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.hs.pulse{animation:pulse .55s ease-out}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,194,14,.95)}100%{box-shadow:0 0 0 14px rgba(255,194,14,0)}}
+.bd{position:absolute;right:-13px;top:50%;transform:translateY(-50%);min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--maroon);color:#fff;font-size:10px;font-weight:800;line-height:17px;text-align:center;box-shadow:0 0 0 2px #fff;pointer-events:none}
+.s .bd{right:-15px}
+.link{position:absolute;display:block;background:transparent;border:0;border-radius:18px;-webkit-tap-highlight-color:transparent}
+.link:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(26,14,11,.96);border-top:1px solid #3a211a;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
+.bar-in{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.nav{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.nb{width:42px;height:42px;border-radius:12px;border:1px solid #4a2b22;background:#2a1812;color:var(--ink);font-size:20px;line-height:1;display:grid;place-items:center}
+.nb:disabled{opacity:.35;cursor:default}
+.ind{height:42px;padding:0 12px;border-radius:12px;border:1px solid #4a2b22;background:#2a1812;color:var(--ink);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cart{flex:1 1 auto;min-width:0;height:46px;border:0;border-radius:14px;background:var(--orange);color:#3b0f05;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 12px}
+.cart .ct{min-width:22px;height:22px;border-radius:11px;background:var(--maroon);color:#fff;font-size:12px;display:grid;place-items:center;padding:0 6px}
+.cart .tx{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cats{position:absolute;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(100% + 8px);width:min(260px,calc(100vw - 24px));background:var(--card);color:var(--card-ink);border-radius:16px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.cats button{display:flex;justify-content:space-between;width:100%;border:0;background:transparent;color:inherit;font-size:14px;font-weight:600;padding:11px 12px;border-radius:10px;text-align:left}
+.cats button[aria-current="true"]{background:#ffe9c7;font-weight:800}
+.cats span{color:#9b6a55;font-variant-numeric:tabular-nums}
+
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);z-index:30;max-width:min(92vw,420px);background:#fffaf2;color:var(--card-ink);font-size:13px;font-weight:700;padding:10px 14px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .18s,transform .18s}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+.veil{position:fixed;inset:0;z-index:40;background:rgba(10,4,2,.66);display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:560px;max-height:88dvh;max-height:88vh;max-height:88dvh;background:var(--card);color:var(--card-ink);border-radius:22px 22px 0 0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px)}
+.sh-h{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px}
+.sh-h h2{margin:0;font-size:18px;font-weight:800;text-wrap:balance}
+.x{width:38px;height:38px;border-radius:50%;border:0;background:#f1e2cc;color:var(--card-ink);font-size:20px;line-height:1}
+.items{overflow:auto;padding:0 18px;display:flex;flex-direction:column}
+.it{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px 0;border-top:1px solid var(--line)}
+.it:first-child{border-top:0}
+.it .nm{font-weight:700;font-size:15px;min-width:0}
+.it .up{font-size:12px;color:#8a5a45;font-variant-numeric:tabular-nums}
+.it .sub{font-weight:800;font-size:15px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ctl{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;margin-top:4px}
+.step{display:flex;align-items:center;gap:4px;background:#f6e8d2;border-radius:12px;padding:3px}
+.step button{width:36px;height:36px;border:0;border-radius:10px;background:#fff;color:var(--card-ink);font-size:20px;font-weight:800;line-height:1}
+.step b{min-width:34px;text-align:center;font-size:16px;font-variant-numeric:tabular-nums}
+.rm{border:0;background:transparent;color:#a3281a;font-size:13px;font-weight:700;padding:8px 4px;text-decoration:underline}
+.empty{padding:20px 0 26px;color:#7a5242;font-size:14px}
+.sh-f{padding:12px 18px 18px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.tot{display:flex;justify-content:space-between;align-items:baseline;font-weight:800}
+.tot span:first-child{font-size:13px;letter-spacing:.06em}
+.tot span:last-child{font-size:24px;font-variant-numeric:tabular-nums}
+.send{display:flex;align-items:center;justify-content:center;gap:10px;height:54px;border-radius:14px;background:#1fa855;color:#fff;font-weight:800;font-size:16px;letter-spacing:.03em;text-decoration:none;border:0}
+.send[aria-disabled="true"]{background:#c9b9a4;color:#fff;pointer-events:none}
+.note{margin:0;font-size:12px;color:#8a5a45;text-align:center}
+.pick{display:flex;flex-direction:column;gap:10px;padding:2px 18px 20px}
+.pick p{margin:0 0 2px;font-size:13px;color:#8a5a45}
+.pick button{height:54px;border:2px solid var(--orange);border-radius:14px;background:#fff;color:var(--card-ink);font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.hs.pulse{animation:none}.toast{transition:none}}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap">
+
+</head>
+<body>
+<main class="stage" id="stage" aria-label="Menu digital Puro Gosto"></main>
+
+<nav class="bar" aria-label="Navegação do menu">
+  <div class="bar-in">
+    <div class="nav">
+      <button class="nb" id="prev" type="button" aria-label="Página anterior">‹</button>
+      <button class="ind" id="ind" type="button" aria-haspopup="true" aria-expanded="false">1 / 8</button>
+      <button class="nb" id="next" type="button" aria-label="Página seguinte">›</button>
+    </div>
+    <button class="cart" id="cartBtn" type="button" aria-haspopup="dialog"><span class="ct" id="cartCt">0</span><span class="tx" id="cartTx">O meu pedido</span></button>
+    <div class="cats" id="cats" hidden></div>
+  </div>
+</nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="veil" id="veil" hidden></div>
+
+<script>
+(function(){
+  var WA='244923923735';
+  var TOTAL_PAGES=8;
+  var CATS=['Início','Hambúrguer','Sandes','Aperitivos','Churrasco','Refrigerante','Bebidas','Despedida'];
+  var DATA={"2": [{"x": 0.2056, "y": 0.3615, "w": 0.1009, "h": 0.024, "n": "Hambúrguer Simples", "p": 2500}, {"x": 0.6648, "y": 0.3609, "w": 0.1019, "h": 0.024, "n": "Hambúrguer Semi Composto", "p": 3500}, {"x": 0.1972, "y": 0.6703, "w": 0.1009, "h": 0.0245, "n": "Hambúrguer Composto", "p": 4300}, {"x": 0.6833, "y": 0.6687, "w": 0.1, "h": 0.024, "n": "Hambúrguer Duplo Gosto", "p": 6500}, {"x": 0.2074, "y": 0.9667, "w": 0.1019, "h": 0.024, "n": "Hambúrguer Ardente", "p": 3000}], "3": [{"x": 0.2185, "y": 0.3469, "w": 0.1009, "h": 0.024, "n": "Sandes Simples", "p": 1000}, {"x": 0.6685, "y": 0.349, "w": 0.1019, "h": 0.024, "n": "Sandes Composto", "p": 2000}, {"x": 0.2009, "y": 0.6479, "w": 0.1019, "h": 0.024, "n": "Tosta de Atum", "p": 800}, {"x": 0.7028, "y": 0.6479, "w": 0.1009, "h": 0.024, "n": "Tosta de Ovo", "p": 800}, {"x": 0.2046, "y": 0.951, "w": 0.1009, "h": 0.024, "n": "Cachorro Quente", "p": 2500}], "4": [{"x": 0.1759, "y": 0.6604, "w": 0.1009, "h": 0.0234, "n": "Moelas a Gosto", "p": 1800}, {"x": 0.687, "y": 0.6625, "w": 0.1009, "h": 0.024, "n": "Asinhas", "p": 6500}, {"x": 0.1815, "y": 0.9661, "w": 0.1, "h": 0.024, "n": "Asinhas a Pimentada", "p": 5000}, {"x": 0.6833, "y": 0.9651, "w": 0.1, "h": 0.0245, "n": "Batatas Puro Gosto", "p": 2000}], "5": [{"x": 0.2019, "y": 0.3589, "w": 0.1, "h": 0.024, "n": "Galinha", "p": 12000}, {"x": 0.6824, "y": 0.3589, "w": 0.1009, "h": 0.024, "n": "Meia Galinha", "p": 6500}, {"x": 0.1991, "y": 0.6656, "w": 0.1009, "h": 0.024, "n": "Frango", "p": 10000}, {"x": 0.6843, "y": 0.6646, "w": 0.1009, "h": 0.024, "n": "Meio Frango", "p": 5500}, {"x": 0.1991, "y": 0.9688, "w": 0.1, "h": 0.0245, "n": "Espetada Grelhada", "p": 1500}, {"x": 0.6815, "y": 0.9641, "w": 0.1009, "h": 0.024, "n": "Tábua Mista", "p": 15000}], "6": [{"x": 0.1333, "y": 0.2141, "w": 0.052, "h": 0.0105, "n": "Coca-Cola Lata", "p": 1000}, {"x": 0.3593, "y": 0.2167, "w": 0.052, "h": 0.0105, "n": "Fanta Lata", "p": 1000}, {"x": 0.5889, "y": 0.2161, "w": 0.052, "h": 0.0105, "n": "Sprite Lata", "p": 1000}, {"x": 0.8148, "y": 0.2172, "w": 0.052, "h": 0.0105, "n": "Sumol Lata", "p": 1000}, {"x": 0.1278, "y": 0.3542, "w": 0.052, "h": 0.0105, "n": "Speed", "p": 1000}, {"x": 0.3583, "y": 0.3536, "w": 0.052, "h": 0.0105, "n": "Coca-Cola Bidon", "p": 800}, {"x": 0.5935, "y": 0.3599, "w": 0.052, "h": 0.0105, "n": "Sprite Bidão", "p": 800}, {"x": 0.8167, "y": 0.3604, "w": 0.052, "h": 0.0105, "n": "Sumo Palinha", "p": 250}, {"x": 0.1259, "y": 0.501, "w": 0.052, "h": 0.0105, "n": "Mirinda Nacional", "p": 400}, {"x": 0.3519, "y": 0.501, "w": 0.052, "h": 0.0105, "n": "Pepsi Nacional", "p": 400}, {"x": 0.5917, "y": 0.5057, "w": 0.052, "h": 0.0105, "n": "7Up Nacional", "p": 400}, {"x": 0.8148, "y": 0.5057, "w": 0.052, "h": 0.0105, "n": "Sumol Nacional", "p": 500}, {"x": 0.1231, "y": 0.6448, "w": 0.052, "h": 0.0105, "n": "Água Mineral", "p": 300}, {"x": 0.3537, "y": 0.6443, "w": 0.052, "h": 0.0105, "n": "Kissangua Grande", "p": 500}, {"x": 0.5963, "y": 0.6505, "w": 0.052, "h": 0.0105, "n": "Whisky", "p": [8000, 25000]}, {"x": 0.8176, "y": 0.6479, "w": 0.052, "h": 0.0105, "n": "Gin", "p": [10000, 16000]}, {"x": 0.1296, "y": 0.7885, "w": 0.052, "h": 0.0105, "n": "Vinho", "p": [8000, 40000]}, {"x": 0.3602, "y": 0.7875, "w": 0.052, "h": 0.0105, "n": "Cocktail", "p": [1000, 5000]}, {"x": 0.5944, "y": 0.7927, "w": 0.052, "h": 0.0105, "n": "Dose Simples", "p": [1000, 500]}, {"x": 0.8176, "y": 0.7922, "w": 0.052, "h": 0.0105, "n": "Dose Dupla", "p": [1000, 2000]}, {"x": 0.1306, "y": 0.9333, "w": 0.052, "h": 0.0105, "n": "Copo", "p": 1000}, {"x": 0.3611, "y": 0.9333, "w": 0.052, "h": 0.0105, "n": "Cuca Lata", "p": 800}, {"x": 0.5963, "y": 0.9354, "w": 0.052, "h": 0.0105, "n": "Cuca Garrafa", "p": 500}, {"x": 0.8167, "y": 0.9354, "w": 0.052, "h": 0.0105, "n": "Heineken Garrafa", "p": 700}], "7": [{"x": 0.1352, "y": 0.2531, "w": 0.052, "h": 0.0105, "n": "N'Gola Garrafa", "p": 500}, {"x": 0.3667, "y": 0.2547, "w": 0.052, "h": 0.0105, "n": "Eka Garrafa", "p": 500}, {"x": 0.6009, "y": 0.2594, "w": 0.052, "h": 0.0105, "n": "Booster Lata", "p": 1000}, {"x": 0.8241, "y": 0.2594, "w": 0.052, "h": 0.0105, "n": "Booster Garrafa", "p": 500}, {"x": 0.137, "y": 0.4109, "w": 0.052, "h": 0.0105, "n": "Dopel Garrafa", "p": 1000}, {"x": 0.137, "y": 0.5703, "w": 0.052, "h": 0.0105, "n": "Gin Tónico", "p": 1000}, {"x": 0.3676, "y": 0.5703, "w": 0.052, "h": 0.0105, "n": "Gin Gordon", "p": 1200}, {"x": 0.6025, "y": 0.5735, "w": 0.052, "h": 0.0105, "n": "Água Tónica", "p": 800}, {"x": 0.8241, "y": 0.5735, "w": 0.052, "h": 0.0105, "n": "Smirnoff", "p": 1200}, {"x": 0.1306, "y": 0.7219, "w": 0.052, "h": 0.0105, "n": "Smirnoff em Garrafa", "p": 700}]};
+  var cart=[];
+  try{var s=localStorage.getItem('pg-cart-v1');if(s){var a=JSON.parse(s);if(Array.isArray(a))cart=a.filter(function(i){return i&&typeof i.price==='number'&&i.qty>0;});}}catch(e){}
+  function save(){try{localStorage.setItem('pg-cart-v1',JSON.stringify(cart));}catch(e){}}
+  function kz(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+' Kz';}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
+  function total(){return cart.reduce(function(s,i){return s+i.price*i.qty;},0);}
+  function count(){return cart.reduce(function(s,i){return s+i.qty;},0);}
+
+  var stage=document.getElementById('stage'),pages=[],hsEls={};
+  for(var i=1;i<=TOTAL_PAGES;i++){
+    var sec=el('section','page');sec.id='pg'+i;
+    var img=new Image();img.src='img/p'+i+'.jpg';img.width=810;img.height=1440;
+    img.alt='Menu Puro Gosto, página '+i+' de '+TOTAL_PAGES+' ('+CATS[i-1]+')';
+    if(i>2)img.loading='lazy';
+    img.decoding='async';
+    sec.appendChild(img);
+    (DATA[i]||[]).forEach(function(p,idx){
+      var small=(i===6||i===7);
+      var b=el('button','hs'+(small?' s':''));b.type='button';
+      b.style.left=(p.x*100)+'%';b.style.top=(p.y*100)+'%';b.style.width=(p.w*100)+'%';b.style.height=(p.h*100)+'%';
+      var key=i+'-'+idx;b.dataset.key=key;
+      var pr=Array.isArray(p.p)?p.p.map(kz).join(' ou '):kz(p.p);
+      b.setAttribute('aria-label','Pedir '+p.n+', '+pr);
+      var bd=el('span','bd');bd.hidden=true;b.appendChild(bd);
+      b.addEventListener('click',function(){onPedir(p,key,b);});
+      sec.appendChild(b);
+      hsEls[key]=b;
+    });
+    pages.push(sec);stage.appendChild(sec);
+  }
+  function addLink(pg,x,y,w,h,node,label){
+    node.className='link';node.style.left=(x*100)+'%';node.style.top=(y*100)+'%';node.style.width=(w*100)+'%';node.style.height=(h*100)+'%';
+    node.setAttribute('aria-label',label);pages[pg-1].appendChild(node);return node;
+  }
+  var mb=el('button');mb.type='button';addLink(1,.253,.865,.544,.088,mb,'Ver o menu');
+  mb.addEventListener('click',function(){goto(2);});
+  var wa=el('a');wa.href='https://wa.me/'+WA;wa.target='_blank';wa.rel='noopener';addLink(8,.162,.783,.174,.088,wa,'Abrir conversa no WhatsApp');
+  var lp=el('button');lp.type='button';addLink(8,.147,.889,.693,.083,lp,'Ver o meu pedido');
+  lp.addEventListener('click',function(){openCart();});
+
+  var cur=1,prev=document.getElementById('prev'),next=document.getElementById('next'),ind=document.getElementById('ind');
+  function goto(n){n=Math.max(1,Math.min(TOTAL_PAGES,n));pages[n-1].scrollIntoView({behavior:'smooth',block:'center'});}
+  function setCur(n){cur=n;ind.textContent=n+' / '+TOTAL_PAGES;prev.disabled=n<=1;next.disabled=n>=TOTAL_PAGES;
+    var cs=document.getElementById('cats');Array.prototype.forEach.call(cs.children,function(b,k){b.setAttribute('aria-current',(k+1===n)?'true':'false');});}
+  prev.addEventListener('click',function(){goto(cur-1);});
+  next.addEventListener('click',function(){goto(cur+1);});
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)setCur(pages.indexOf(e.target)+1);});},{threshold:[.55]});
+    pages.forEach(function(p){io.observe(p);});
+  }
+  var cats=document.getElementById('cats');
+  CATS.forEach(function(c,k){var b=el('button');b.type='button';b.appendChild(el('b',null,c));b.appendChild(el('span',null,String(k+1)));
+    b.firstChild.style.fontWeight='inherit';
+    b.addEventListener('click',function(){closeCats();goto(k+1);});cats.appendChild(b);});
+  function closeCats(){cats.hidden=true;ind.setAttribute('aria-expanded','false');}
+  ind.addEventListener('click',function(){var o=cats.hidden;cats.hidden=!o;ind.setAttribute('aria-expanded',o?'true':'false');});
+  document.addEventListener('click',function(e){if(!cats.hidden&&!cats.contains(e.target)&&e.target!==ind)closeCats();});
+  setCur(1);
+
+  var toastEl=document.getElementById('toast'),tt;
+  function toast(m){toastEl.textContent=m;toastEl.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){toastEl.classList.remove('on');},1500);}
+  function pulse(b){b.classList.remove('pulse');void b.offsetWidth;b.classList.add('pulse');}
+
+  function addItem(key,name,price,btn){
+    var id=key+'|'+price,f=null;
+    cart.forEach(function(i){if(i.id===id)f=i;});
+    if(f)f.qty+=1;else cart.push({id:id,key:key,name:name,price:price,qty:1});
+    save();refresh();if(btn)pulse(btn);
+    toast('✓ '+name+' adicionado');
+  }
+  function onPedir(p,key,btn){
+    if(Array.isArray(p.p)){openPick(p,key,btn);return;}
+    addItem(key,p.n,p.p,btn);
+  }
+  function refresh(){
+    var c=count(),t=total();
+    document.getElementById('cartCt').textContent=c;
+    document.getElementById('cartTx').textContent=c?('Ver pedido · '+kz(t)):'O meu pedido';
+    Object.keys(hsEls).forEach(function(k){
+      var q=0;cart.forEach(function(i){if(i.key===k)q+=i.qty;});
+      var bd=hsEls[k].firstChild;bd.hidden=!q;bd.textContent=q||'';
+    });
+    if(!veil.hidden&&mode==='cart')renderCart();
+  }
+
+  var veil=document.getElementById('veil'),mode='',lastFocus=null;
+  function openVeil(m){mode=m;lastFocus=document.activeElement;veil.hidden=false;document.body.style.overflow='hidden';}
+  function closeVeil(){veil.hidden=true;mode='';document.body.style.overflow='';if(lastFocus&&lastFocus.focus)try{lastFocus.focus();}catch(e){}}
+  veil.addEventListener('click',function(e){if(e.target===veil)closeVeil();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(!veil.hidden)closeVeil();else closeCats();}});
+
+  function sheetHead(title){
+    var h=el('div','sh-h');h.appendChild(el('h2',null,title));
+    var x=el('button','x','✕');x.type='button';x.setAttribute('aria-label','Fechar');x.addEventListener('click',closeVeil);h.appendChild(x);return h;
+  }
+  function openPick(p,key,btn){
+    veil.textContent='';
+    var sh=el('div','sheet');sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-label','Escolher preço');
+    sh.appendChild(sheetHead(p.n));
+    var w=el('div','pick');w.appendChild(el('p',null,'Escolha o preço indicado no menu:'));
+    p.p.forEach(function(v){var b=el('button',null,kz(v));b.type='button';b.addEventListener('click',function(){closeVeil();addItem(key,p.n,v,btn);});w.appendChild(b);});
+    sh.appendChild(w);veil.appendChild(sh);openVeil('pick');
+  }
+  function message(){
+    var L=['Olá, Puro Gosto! Gostaria de fazer o seguinte pedido:',''];
+    cart.forEach(function(i,n){
+      L.push((n+1)+'. '+i.name);
+      L.push('   Quantidade: '+i.qty);
+      L.push('   Preço unitário: '+kz(i.price));
+      L.push('   Subtotal: '+kz(i.price*i.qty));
+    });
+    L.push('');L.push('TOTAL: '+kz(total()));L.push('');L.push('Aguardo a confirmação do meu pedido. Obrigado!');
+    return L.join('\n');
+  }
+  function waUrl(){return 'https://wa.me/'+WA+'?text='+encodeURIComponent(message());}
+  function renderCart(){
+    veil.textContent='';
+    var sh=el('div','sheet');sh.setAttribute('role','dialog');sh.setAttribute('aria-modal','true');sh.setAttribute('aria-label','O seu pedido');
+    sh.appendChild(sheetHead('O seu pedido'));
+    var box=el('div','items');
+    if(!cart.length){box.appendChild(el('p','empty','Ainda não escolheu nenhum produto. Toque em PEDIR junto ao produto no menu.'));}
+    cart.forEach(function(i){
+      var r=el('div','it');
+      var l=el('div');l.appendChild(el('div','nm',i.name));l.appendChild(el('div','up',kz(i.price)+' cada'));r.appendChild(l);
+      r.appendChild(el('div','sub',kz(i.price*i.qty)));
+      var c=el('div','ctl'),st=el('div','step');
+      var m=el('button',null,'−');m.type='button';m.setAttribute('aria-label','Diminuir quantidade de '+i.name);
+      m.addEventListener('click',function(){i.qty-=1;if(i.qty<=0)cart=cart.filter(function(z){return z!==i;});save();refresh();});
+      var q=el('b',null,String(i.qty));q.setAttribute('aria-live','polite');
+      var pl=el('button',null,'+');pl.type='button';pl.setAttribute('aria-label','Aumentar quantidade de '+i.name);
+      pl.addEventListener('click',function(){i.qty+=1;save();refresh();});
+      st.appendChild(m);st.appendChild(q);st.appendChild(pl);c.appendChild(st);
+      var rm=el('button','rm','Remover');rm.type='button';rm.setAttribute('aria-label','Remover '+i.name);
+      rm.addEventListener('click',function(){cart=cart.filter(function(z){return z!==i;});save();refresh();});
+      c.appendChild(rm);r.appendChild(c);box.appendChild(r);
+    });
+    sh.appendChild(box);
+    var f=el('div','sh-f'),t=el('div','tot');t.appendChild(el('span',null,'TOTAL'));t.appendChild(el('span',null,kz(total())));f.appendChild(t);
+    var a=el('a','send','ENVIAR PEDIDO');
+    if(cart.length){a.href=waUrl();a.target='_blank';a.rel='noopener';}else a.setAttribute('aria-disabled','true');
+    a.id='sendBtn';f.appendChild(a);
+    f.appendChild(el('p','note','O WhatsApp abre com o pedido pronto. Carregue em Enviar dentro do WhatsApp para concluir.'));
+    sh.appendChild(f);veil.appendChild(sh);
+  }
+  function openCart(){renderCart();openVeil('cart');}
+  document.getElementById('cartBtn').addEventListener('click',openCart);
+  refresh();
+  window.__pg={cart:function(){return cart;},message:message,waUrl:waUrl,total:total};
+})();
+</script>
+
+</body>
+</html>
